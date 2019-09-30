@@ -1,0 +1,24 @@
+bridge:
+  # Port to host the bridge on
+  # Used for communication between the homeserver and the bridge
+  port: {{ matrix_mx_puppet_slack_appservice_port }}
+  # The host connections to the bridge's webserver are allowed from
+  bindAddress: {{ matrix_mx_puppet_slack_bind_address }}
+  # Public domain of the homeserver
+  domain: {{ matrix_domain }}
+  # Reachable URL of the Matrix homeserver
+  homeserverUrl: {{ matrix_mx_puppet_slack_homeserver_url }}
+
+provisioning:
+  # Regex of Matrix IDs allowed to use the puppet bridge
+  whitelist:
+    - ".*:{{ matrix_domain | regex_escape() | replace("\\", "\\\\") }}"
+  # Regex of Matrix IDs forbidden from using the puppet bridge
+  # blacklist:
+
+database:
+  # The name of the database file
+  filename: /data/database.db
+
+logging:
+  console: "debug"

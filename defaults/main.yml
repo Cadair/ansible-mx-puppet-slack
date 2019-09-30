@@ -1,0 +1,21 @@
+# Needed playbook vars:
+# matrix_user_uid:
+# matrix_user_gid:
+# matrix_user_user:
+# matrix_docker_network: "matrix"
+
+# systemd
+matrix_mx_puppet_slack_systemd_required_services_list: ["matrix-synapse.service"]
+matrix_mx_puppet_slack_systemd_wanted_services_list: []
+matrix_mx_puppet_slack_container_extra_arguments: []
+
+matrix_mx_puppet_slack_appservice_port: 8434
+matrix_mx_puppet_slack_bind_address: localhost
+matrix_mx_puppet_slack_docker_image: "sorunome/mx-puppet-slack:latest"
+matrix_mx_puppet_slack_config_path: "/matrix/mx-puppet-slack"
+matrix_mx_puppet_slack_registration_path: "{{ matrix_mx_puppet_slack_config_path }}"
+matrix_mx_puppet_slack_registration_filename: "mx-puppet-slack-registration.yaml"
+matrix_mx_puppet_slack_registration_file: "{{ matrix_mx_puppet_slack_registration_path }}/{{ matrix_mx_puppet_slack_registration_filename }}"
+
+matrix_mx_puppet_slack_homeserver_host: "matrix-synapse"
+matrix_mx_puppet_slack_homeserver_url: "http://{{ matrix_mx_puppet_slack_homeserver_host }}:8008"

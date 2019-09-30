@@ -1,0 +1,70 @@
+---
+- name: Pull docker image
+  docker_image:
+    name: "{{ matrix_mx_puppet_slack_docker_image }}"
+
+- name: Set permissions on config
+  file:
+    path: "{{ matrix_mx_puppet_slack_config_path }}"
+    owner: "{{ matrix_user_username }}"
+    recurse: yes
+    state: directory
+
+- name: Ensure config directory exists
+  file:
+    path: "{{ matrix_mx_puppet_slack_config_path }}"
+    state: directory
+    owner: "{{ matrix_user_uid }}"
+    group: "{{ matrix_user_gid }}"
+    mode: 751
+
+- name: Create config
+  template:
+    src: puppet-slack-config.yaml.j2
+    dest: "{{ matrix_mx_puppet_slack_config_path }}/config.yaml"
+
+- name: Remove registration file
+  file:
+    path: "{{ matrix_mx_puppet_slack_registration_file }}"
+    state: absent
+
+- name: Create registration file
+  shell: "docker run -v {{ matrix_mx_puppet_slack_config_path }}:/data --network {{ matrix_docker_network }} {{ matrix_mx_puppet_slack_docker_image }} -r -f /data/slack-registration.yaml"
+  args:
+    creates: "{{ matrix_mx_puppet_slack_config_path }}/slack-registration.yaml"
+
+- name: Move registration file
+  copy:
+    src: "{{ matrix_mx_puppet_slack_config_path }}/slack-registration.yaml"
+    dest: "{{ matrix_mx_puppet_slack_registration_file }}"
+    owner: "{{ matrix_user_uid }}"
+    group: "{{ matrix_user_gid }}"
+    remote_src: true
+    mode: 751
+
+- name: remove temp file
+  file:
+    path: "{{ matrix_mx_puppet_slack_config_path }}/slack-registration.yaml"
+    state: absent
+  when: 'matrix_mx_puppet_slack_registration_filename != "slack-registration.yaml"'
+
+- name: Install systemd service
+  template:
+    src: puppet-slack-appservice.service.j2
+    dest: /etc/systemd/system/matrix-mx-puppet-slack.service
+    mode: 755
+
+- set_fact:
+    matrix_systemd_services_list: "{{ matrix_systemd_services_list|default([]) + ['matrix-mx-puppet-slack'] }}"
+
+- set_fact:
+    matrix_mx_puppet_slack_registration_file: "{{ matrix_mx_puppet_slack_registration_file }}"
+    matrix_synapse_container_extra_arguments: >
+      {{ matrix_synapse_container_extra_arguments|default([]) }}
+      +
+      {{ ["--mount type=bind,src={{ matrix_mx_puppet_slack_registration_file }},dst=/matrix-mx-puppet-slack-registration.yaml,ro"] }}
+
+    matrix_synapse_app_service_config_files: >
+      {{ matrix_synapse_app_service_config_files|default([]) }}
+      +
+      {{ ["/matrix-mx-puppet-slack-registration.yaml"] }}
